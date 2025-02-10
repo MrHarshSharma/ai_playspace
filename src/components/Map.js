@@ -211,6 +211,7 @@ function Map({ userLocation, playSpaces }) {
     }, [userLocation]);
 
     return (
+        <>
         <MapContainer 
             center={center}
             zoom={15} 
@@ -237,6 +238,7 @@ function Map({ userLocation, playSpaces }) {
             }}
             playSpace={selectedSpace}
         />
+        </>
     );
 }
 
