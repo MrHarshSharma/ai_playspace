@@ -19,6 +19,7 @@ export function AuthProvider({ children }) {
     });
 
     return unsubscribe;
+    
   }, []);
 
   useEffect(() => {
