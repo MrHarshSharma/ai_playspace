@@ -10,7 +10,7 @@ const mockPlaySpaces = [
       address: 'Central Park, Block A'
     },
     availableTime: '6 AM - 10 PM',
-    price: '₹500/hour',
+    price: '₹0/hour',
     facilities: ['Floodlights', 'Equipment Rental', 'Parking']
   },
   {
@@ -23,7 +23,7 @@ const mockPlaySpaces = [
       address: 'SportZone Complex, Sector 15'
     },
     availableTime: '24/7',
-    price: '₹300/hour',
+    price: '₹0/hour',
     facilities: ['Indoor Court', 'Locker Room', 'Cafe']
   },
   {
@@ -36,7 +36,7 @@ const mockPlaySpaces = [
       address: 'Green Field Arena, Block D'
     },
     availableTime: '5 AM - 11 PM',
-    price: '₹800/hour',
+    price: '₹0/hour',
     facilities: ['Natural Grass', 'Floodlights', 'Changing Rooms']
   },
   {
@@ -49,7 +49,7 @@ const mockPlaySpaces = [
       address: 'Stadium Complex, Sector 20'
     },
     availableTime: '6 AM - 9 PM',
-    price: '₹1000/hour',
+    price: '₹0/hour',
     facilities: ['Cricket Pitch', 'Practice Nets', 'Equipment Rental', 'Pavilion']
   },
   {
@@ -62,7 +62,7 @@ const mockPlaySpaces = [
       address: 'Indoor Sports Complex, Block F'
     },
     availableTime: '7 AM - 11 PM',
-    price: '₹400/hour',
+    price: '₹0/hour',
     facilities: ['Indoor Courts', 'Air Conditioning', 'Equipment Shop']
   },
   {
@@ -75,7 +75,7 @@ const mockPlaySpaces = [
       address: 'Sports City, Sector 25'
     },
     availableTime: '5 AM - 10 PM',
-    price: '₹600/hour',
+    price: '₹0/hour',
     facilities: ['Multiple Courts', 'Gym', 'Swimming Pool', 'Cafe']
   },
   {
@@ -88,7 +88,7 @@ const mockPlaySpaces = [
       address: 'Indoor Games Complex, Block H'
     },
     availableTime: '9 AM - 9 PM',
-    price: '₹200/hour',
+    price: '₹0/hour',
     facilities: ['Professional Tables', 'Training Programs', 'Air Conditioning']
   },
   {
@@ -101,7 +101,7 @@ const mockPlaySpaces = [
       address: 'Beach Sports Arena, Sector 30'
     },
     availableTime: '6 AM - 8 PM',
-    price: '₹300/hour',
+    price: '₹0/hour',
     facilities: ['Sand Court', 'Night Lighting', 'Changing Rooms']
   }
 ];

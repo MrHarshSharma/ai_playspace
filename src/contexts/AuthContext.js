@@ -45,6 +45,7 @@ export function AuthProvider({ children }) {
     try {
         const result = await signInWithPopup(auth, googleProvider);
         const user = result.user;
+
         setUser(user); // Update user state
         console.log('User signed in:', user);
     } catch (error) {
