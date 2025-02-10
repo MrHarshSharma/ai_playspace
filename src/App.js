@@ -30,16 +30,26 @@ function App() {
   });
   const [playSpaces, setPlaySpaces] = useState([]);
   const [isLoading, setIsLoading] = useState(!userLocation);
+  const [notificationShown, setNotificationShown] = useState(false);
   const toast = useToast();
 
-  // Update play spaces whenever user location changes
-  useEffect(() => {
+  const debounce = (func, delay) => {
+    let timeout;
+    return (...args) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        func.apply(this, args);
+      }, delay);
+    };
+  };
+
+  const updatePlaySpaces = useCallback(debounce(() => {
     if (userLocation?.lat && userLocation?.lng) {
       const nearbySpaces = getNearbyPlaySpaces(userLocation.lat, userLocation.lng, 10);
       setPlaySpaces(nearbySpaces);
 
-      // Show toast if spaces are found
-      if (nearbySpaces.length > 0) {
+      // Show toast if spaces are found and notification hasn't been shown
+      if (nearbySpaces.length > 0 && !notificationShown) {
         toast({
           title: 'Play Spaces Found',
           description: `Found ${nearbySpaces.length} play spaces near you`,
@@ -47,9 +57,14 @@ function App() {
           duration: 3000,
           isClosable: true,
         });
+        setNotificationShown(true); // Set the flag to true after showing the notification
       }
     }
-  }, [userLocation]); // Depend on userLocation
+  }, 300), [userLocation]);
+
+  useEffect(() => {
+    updatePlaySpaces(); // Call updatePlaySpaces only when userLocation changes
+  }, [userLocation]);
 
   // Save location to localStorage whenever it updates
   useEffect(() => {
