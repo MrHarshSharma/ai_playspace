@@ -13,6 +13,8 @@ import { useAuth } from '../contexts/AuthContext';
 function ProfileMenu() {
   const { user, signInWithGoogle, logout } = useAuth();
 
+  console.log('User object:', user);
+
   return (
     <Menu zIndex={900}>
       <MenuButton>

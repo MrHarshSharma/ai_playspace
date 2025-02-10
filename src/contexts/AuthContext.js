@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, googleProvider } from '../firebase';
 import { getAuth, GoogleAuthProvider, getRedirectResult, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged } from 'firebase/auth';
+import { storeGoogleUser, getUserByEmail } from '../server/api'; // Updated path
 
 const AuthContext = createContext();
 
@@ -46,10 +47,31 @@ export function AuthProvider({ children }) {
         const result = await signInWithPopup(auth, googleProvider);
         const user = result.user;
 
-        setUser(user); // Update user state
+        // Check if the user already exists in Supabase
+        const existingUser = await getUserByEmail(user.email);
+        
+        if (existingUser) {
+            // User already exists, log them in directly
+            setUser(existingUser);
+            console.log('User logged in:', existingUser);
+            return;
+        }
+
+        // User does not exist, attempt to store user in Supabase
+        const storedUser = await storeGoogleUser(user);
+
+        // Check if user was stored successfully
+        if (!storedUser) {
+            console.error('Failed to store user in Supabase, login aborted.');
+            return; // Abort login if storing user failed
+        }
+
+        // Set user state only if storing was successful
+        setUser(user); // Update user state only if storing was successful
         console.log('User signed in:', user);
     } catch (error) {
         console.error('Error signing in with Google:', error);
+        return; // Abort login if there is an error while signing in with Google
     }
   };
 

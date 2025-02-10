@@ -44,22 +44,15 @@ function MapUpdater({ userLocation }) {
     const map = useMap();
     const isFirstUpdate = React.useRef(true);
     
-    const updateMapView = useCallback((position, animate = true) => {
+    const updateMapView = useCallback((position) => {
         const zoomLevel = 15;
-        if (animate) {
-            map.flyTo(position, zoomLevel, {
-                duration: 1.5,
-                easeLinearity: 0.25
-            });
-        } else {
-            map.setView(position, zoomLevel);
-        }
+        map.setView(position, zoomLevel);
     }, [map]);
 
     useEffect(() => {
         if (userLocation) {
             const position = [userLocation.lat, userLocation.lng];
-            updateMapView(position, !isFirstUpdate.current);
+            updateMapView(position);
             isFirstUpdate.current = false;
         }
     }, [userLocation, updateMapView]);

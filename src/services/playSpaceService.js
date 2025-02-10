@@ -120,12 +120,12 @@ function getDistance(lat1, lon1, lat2, lon2) {
 }
 
 // Function to get nearby play spaces within a radius
-export function getNearbyPlaySpaces(userLat, userLng, radiusKm = 5) {
+export function getNearbyPlaySpaces(userLat, userLng, radiusKm = 10) {
   // For mock data, we'll adjust the locations relative to user's position
   const adjustedPlaySpaces = mockPlaySpaces.map(space => {
     // Create slight variations in location
-    const latOffset = (Math.random() - 0.5) * 0.01; // ~1km variation
-    const lngOffset = (Math.random() - 0.5) * 0.01;
+    const latOffset = (Math.random() - 0.5) * 0.015; // ~1km variation
+    const lngOffset = (Math.random() - 0.5) * 0.015;
     
     return {
       ...space,
