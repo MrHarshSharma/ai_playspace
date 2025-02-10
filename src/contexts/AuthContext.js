@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, googleProvider } from '../firebase';
-import { signInWithRedirect, signOut, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, getRedirectResult, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged } from 'firebase/auth';
 
 const AuthContext = createContext();
 
@@ -21,9 +21,31 @@ export function AuthProvider({ children }) {
     return unsubscribe;
   }, []);
 
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+        try {
+            const result = await getRedirectResult(getAuth());
+            if (result) {
+                const user = result.user;
+                setUser(user); // Update user state
+                console.log('User signed in:', user);
+            } else {
+              setLoading(false); // Ensure loading state is set to false if no result
+            }
+        } catch (error) {
+            console.error('Error getting redirect result:', error);
+            setLoading(false); // Ensure loading state is set to false on error
+        }
+    };
+    handleRedirectResult();
+  }, []);
+
   const signInWithGoogle = async () => {
     try {
-        await signInWithRedirect(auth, googleProvider);
+        const result = await signInWithPopup(auth, googleProvider);
+        const user = result.user;
+        setUser(user); // Update user state
+        console.log('User signed in:', user);
     } catch (error) {
         console.error('Error signing in with Google:', error);
     }
@@ -31,7 +53,7 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      await signOut(auth);
+      await signOut(getAuth());
     } catch (error) {
       console.error('Error signing out:', error);
     }
