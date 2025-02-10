@@ -31,6 +31,7 @@ function App() {
   const [playSpaces, setPlaySpaces] = useState([]);
   const [isLoading, setIsLoading] = useState(!userLocation);
   const [notificationShown, setNotificationShown] = useState(false);
+  const [markersShown, setMarkersShown] = useState(false);
   const toast = useToast();
 
   const debounce = (func, delay) => {
@@ -46,10 +47,13 @@ function App() {
   const updatePlaySpaces = useCallback(debounce(() => {
     if (userLocation?.lat && userLocation?.lng) {
       const nearbySpaces = getNearbyPlaySpaces(userLocation.lat, userLocation.lng, 10);
-      setPlaySpaces(nearbySpaces);
+      
+      // Render markers only once
+      if (nearbySpaces.length > 0 && !markersShown) {
+        setPlaySpaces(nearbySpaces);
+        setMarkersShown(true); // Set the flag to true after rendering markers
 
-      // Show toast if spaces are found and notification hasn't been shown
-      if (nearbySpaces.length > 0 && !notificationShown) {
+        // Show toast if spaces are found
         toast({
           title: 'Play Spaces Found',
           description: `Found ${nearbySpaces.length} play spaces near you`,
