@@ -28,6 +28,17 @@ const playSpaceIcon = L.icon({
     shadowSize: [41, 41]
 });
 
+// Debounce function to limit how often a function can fire
+const debounce = (func, delay) => {
+    let timeout;
+    return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            func.apply(this, args);
+        }, delay);
+    };
+};
+
 // Component to handle map view updates
 function MapUpdater({ userLocation }) {
     const map = useMap();
@@ -59,36 +70,47 @@ function MapUpdater({ userLocation }) {
 function Map({ userLocation, playSpaces }) {
     const [selectedSpace, setSelectedSpace] = useState(null);
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+    const [debouncedUserLocation, setDebouncedUserLocation] = useState(userLocation);
     const defaultPosition = useMemo(() => [28.6139, 77.2090], []); // Default to Delhi
     const { user, signInWithGoogle } = useAuth();
     const toast = useToast();
     
     // Initial map center
     const center = useMemo(() => {
-        return userLocation ? [userLocation.lat, userLocation.lng] : defaultPosition;
-    }, [userLocation, defaultPosition]);
+        return debouncedUserLocation ? [debouncedUserLocation.lat, debouncedUserLocation.lng] : defaultPosition;
+    }, [debouncedUserLocation, defaultPosition]);
+
+    const updateLocation = useCallback(debounce((newLocation) => {
+        setDebouncedUserLocation(newLocation);
+    }, 300), []);
+
+    useEffect(() => {
+        if (userLocation) {
+            updateLocation(userLocation);
+        }
+    }, [userLocation, updateLocation]);
 
     // User location marker and circle
     const UserLocationMarker = useCallback(() => {
-        if (!userLocation) return null;
+        if (!debouncedUserLocation) return null;
 
         return (
             <>
                 <Marker 
-                    position={[userLocation.lat, userLocation.lng]}
+                    position={[debouncedUserLocation.lat, debouncedUserLocation.lng]}
                     icon={userIcon}
                 >
                     <Popup>
                         <div>
                             <h3>Your Location</h3>
-                            <p>Accuracy: ±{Math.round(userLocation.accuracy)}m</p>
+                            <p>Accuracy: ±{Math.round(debouncedUserLocation.accuracy)}m</p>
                         </div>
                     </Popup>
                 </Marker>
                 
                 <Circle
-                    center={[userLocation.lat, userLocation.lng]}
-                    radius={userLocation.accuracy}
+                    center={[debouncedUserLocation.lat, debouncedUserLocation.lng]}
+                    radius={debouncedUserLocation.accuracy}
                     pathOptions={{ 
                         color: '#2196F3',
                         fillColor: '#2196F3',
@@ -97,7 +119,7 @@ function Map({ userLocation, playSpaces }) {
                 />
             </>
         );
-    }, [userLocation]);
+    }, [debouncedUserLocation]);
 
     // Play spaces markers
     const PlaySpaceMarkers = useCallback(() => {
@@ -219,7 +241,7 @@ function Map({ userLocation, playSpaces }) {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             
-            <MapUpdater userLocation={userLocation} />
+            <MapUpdater userLocation={debouncedUserLocation} />
             <UserLocationMarker />
             <PlaySpaceMarkers />
         </MapContainer>
