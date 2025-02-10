@@ -34,29 +34,22 @@ function App() {
 
   // Update play spaces whenever user location changes
   useEffect(() => {
-    const updatePlaySpaces = () => {
-      if (userLocation?.lat && userLocation?.lng) {
-        const nearbySpaces = getNearbyPlaySpaces(userLocation.lat, userLocation.lng, 10);
-        setPlaySpaces(nearbySpaces);
-
-        // Show toast if spaces are found
-        if (nearbySpaces.length > 0) {
-          toast({
-            title: 'Play Spaces Found',
-            description: `Found ${nearbySpaces.length} play spaces near you`,
-            status: 'success',
-            duration: 3000,
-            isClosable: true,
-          });
-        }
-      }
-    };
-
-    // Only update if we have a valid location
     if (userLocation?.lat && userLocation?.lng) {
-      updatePlaySpaces();
+      const nearbySpaces = getNearbyPlaySpaces(userLocation.lat, userLocation.lng, 10);
+      setPlaySpaces(nearbySpaces);
+
+      // Show toast if spaces are found
+      if (nearbySpaces.length > 0) {
+        toast({
+          title: 'Play Spaces Found',
+          description: `Found ${nearbySpaces.length} play spaces near you`,
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+      }
     }
-  }, [userLocation?.lat, userLocation?.lng]); // Only depend on lat/lng changes
+  }, [userLocation]); // Depend on userLocation
 
   // Save location to localStorage whenever it updates
   useEffect(() => {
