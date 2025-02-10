@@ -70,67 +70,19 @@ function MapUpdater({ userLocation }) {
 function Map({ userLocation, playSpaces }) {
     const [selectedSpace, setSelectedSpace] = useState(null);
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-    const [debouncedUserLocation, setDebouncedUserLocation] = useState(userLocation);
     const defaultPosition = useMemo(() => [28.6139, 77.2090], []); // Default to Delhi
     const { user, signInWithGoogle } = useAuth();
     const toast = useToast();
     
     // Initial map center
     const center = useMemo(() => {
-        return debouncedUserLocation ? [debouncedUserLocation.lat, debouncedUserLocation.lng] : defaultPosition;
-    }, [debouncedUserLocation, defaultPosition]);
+        return userLocation ? [userLocation.lat, userLocation.lng] : defaultPosition;
+    }, [userLocation, defaultPosition]);
 
-    const updateLocation = useCallback(debounce((newLocation) => {
-        setDebouncedUserLocation(newLocation);
-    }, 300), []);
-
-    useEffect(() => {
-        if (userLocation) {
-            updateLocation(userLocation);
-        }
-    }, [userLocation, updateLocation]);
-
-    // User location marker and circle
-    const UserLocationMarker = useCallback(() => {
-        if (!debouncedUserLocation) return null;
-
-        return (
-            <>
-                <Marker 
-                    position={[debouncedUserLocation.lat, debouncedUserLocation.lng]}
-                    icon={userIcon}
-                >
-                    <Popup>
-                        <div>
-                            <h3>Your Location</h3>
-                            <p>Accuracy: ±{Math.round(debouncedUserLocation.accuracy)}m</p>
-                        </div>
-                    </Popup>
-                </Marker>
-                
-                <Circle
-                    center={[debouncedUserLocation.lat, debouncedUserLocation.lng]}
-                    radius={debouncedUserLocation.accuracy}
-                    pathOptions={{ 
-                        color: '#2196F3',
-                        fillColor: '#2196F3',
-                        fillOpacity: 0.15
-                    }}
-                />
-            </>
-        );
-    }, [debouncedUserLocation]);
-
-    // Play spaces markers
-    const PlaySpaceMarkers = useCallback(() => {
-        if (!playSpaces?.length) return null;
-
-        return playSpaces.map((space) => (
-            <Marker 
-                key={space.id}
-                position={[space.location.lat, space.location.lng]}
-                icon={playSpaceIcon}
-            >
+    // Store markers in state
+    const markers = useMemo(() => {
+        return playSpaces.map(space => (
+            <Marker key={space.id} position={[space.location.lat, space.location.lng]} icon={playSpaceIcon}>
                 <Popup>
                     <div style={{ minWidth: '200px' }}>
                         <h3 style={{ 
@@ -228,22 +180,52 @@ function Map({ userLocation, playSpaces }) {
         ));
     }, [playSpaces]);
 
+    // User location marker and circle
+    const UserLocationMarker = useCallback(() => {
+        if (!userLocation) return null;
+        return (
+            <>
+                <Marker 
+                    position={[userLocation.lat, userLocation.lng]}
+                    icon={userIcon}
+                >
+                    <Popup>
+                        <div>
+                            <h3>Your Location</h3>
+                            <p>Accuracy: ±{Math.round(userLocation.accuracy)}m</p>
+                        </div>
+                    </Popup>
+                </Marker>
+                
+                <Circle
+                    center={[userLocation.lat, userLocation.lng]}
+                    radius={userLocation.accuracy}
+                    pathOptions={{ 
+                        color: '#2196F3',
+                        fillColor: '#2196F3',
+                        fillOpacity: 0.15
+                    }}
+                />
+            </>
+        );
+    }, [userLocation]);
+
     return (
-        <>
         <MapContainer 
             center={center}
             zoom={15} 
             style={{ height: '100vh', width: '100vw' }}
             zoomControl={false}
             attributionControl={false}
+            scrollWheelZoom={false}
         >
             <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             
-            <MapUpdater userLocation={debouncedUserLocation} />
+            <MapUpdater userLocation={userLocation} />
             <UserLocationMarker />
-            <PlaySpaceMarkers />
+            {markers}
         </MapContainer>
 
         {/* Booking Modal */}
@@ -255,7 +237,6 @@ function Map({ userLocation, playSpaces }) {
             }}
             playSpace={selectedSpace}
         />
-        </>
     );
 }
 
