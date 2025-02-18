@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -21,42 +21,32 @@ import {
   NumberDecrementStepper,
 } from '@chakra-ui/react';
 
-function BookingModal({ isOpen, onClose, playSpace }) {
+function BookingModal({ isOpen, onClose, playSpace, handleSubmit }) {
   const OverlayOne = () => (
     <ModalOverlay
       bg='blackAlpha.300'
       backdropFilter='blur(10px)'
     />
   );
-  const toast = useToast();
+  
+  const [formData, setFormData] = useState({}); 
+  const [loading, setLoading] = useState(false); 
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const bookingData = {
-      playSpaceId: playSpace.id,
-      date: formData.get('date'),
-      time: formData.get('time'),
-      players: formData.get('players'),
-      sport: formData.get('sport')
-    };
-
-    // Here you would typically make an API call to save the booking
-    console.log('Booking data:', bookingData);
+  const onSubmit = (e) => {
+    e.preventDefault(); 
+    setLoading(true); 
+    handleSubmit(formData).then(() => {
+      setLoading(false); 
+    }); 
     
-    toast({
-      title: 'Booking Successful!',
-      description: `You've booked ${playSpace.name} for ${bookingData.date} at ${bookingData.time}`,
-      status: 'success',
-      duration: 5000,
-      isClosable: true,
-    });
-
-    onClose();
+    
   };
 
-  // Get today's date in YYYY-MM-DD format for min date
   const today = new Date().toISOString().split('T')[0];
+
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   return (
     <Modal 
@@ -79,7 +69,7 @@ function BookingModal({ isOpen, onClose, playSpace }) {
       >
         <ModalHeader>Book {playSpace?.name}</ModalHeader>
         <ModalCloseButton />
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={onSubmit}>
           <ModalBody>
             <VStack spacing={4}>
               <FormControl isRequired>
@@ -88,13 +78,15 @@ function BookingModal({ isOpen, onClose, playSpace }) {
                   name="date"
                   type="date"
                   min={today}
-                  max={new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]} // 30 days from now
+                  max={new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]} 
+                  onChange={handleInputChange}
                 />
               </FormControl>
 
               <FormControl isRequired>
                 <FormLabel>Time</FormLabel>
-                <Select name="time">
+                <Select name="time" onChange={handleInputChange}>
+                  <option value="">Select Time</option>
                   <option value="06:00">6:00 AM</option>
                   <option value="07:00">7:00 AM</option>
                   <option value="08:00">8:00 AM</option>
@@ -116,8 +108,8 @@ function BookingModal({ isOpen, onClose, playSpace }) {
 
               <FormControl isRequired>
                 <FormLabel>Number of Players</FormLabel>
-                <NumberInput min={1} max={30} defaultValue={2}>
-                  <NumberInputField name="players" />
+                <NumberInput min={1} max={30}>
+                  <NumberInputField name="players" onChange={handleInputChange} />
                   <NumberInputStepper>
                     <NumberIncrementStepper />
                     <NumberDecrementStepper />
@@ -127,7 +119,8 @@ function BookingModal({ isOpen, onClose, playSpace }) {
 
               <FormControl isRequired>
                 <FormLabel>Sport</FormLabel>
-                <Select name="sport" defaultValue={playSpace?.sport}>
+                <Select name="sport" onChange={handleInputChange}>
+                  <option value="">Select Sport</option>
                   <option value="Tennis">Tennis</option>
                   <option value="Basketball">Basketball</option>
                   <option value="Football">Football</option>
@@ -139,9 +132,7 @@ function BookingModal({ isOpen, onClose, playSpace }) {
           </ModalBody>
 
           <ModalFooter>
-            <Button colorScheme="blue" mr={3} type="submit">
-              Book Now
-            </Button>
+            <Button type="submit" isLoading={loading} loadingText="Booking...">Book</Button>
             <Button variant="ghost" onClick={onClose}>Cancel</Button>
           </ModalFooter>
         </form>

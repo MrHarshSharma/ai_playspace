@@ -1,8 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, VStack, Container, Text, useToast, Spinner, Center, Input } from '@chakra-ui/react';
+import { 
+  Box, 
+  VStack, 
+  Container, 
+  Text, 
+  useToast, 
+  Spinner, 
+  Center, 
+  Input 
+} from '@chakra-ui/react';
+import { 
+  BrowserRouter as Router, 
+  Routes, 
+  Route, 
+  Navigate 
+} from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProfileMenu from './components/ProfileMenu';
 import Map from './components/Map';
+import BookingsPage from './pages/BookingsPage';
 import { getNearbyPlaySpaces } from './services/playSpaceService';
 
 function App() {
@@ -164,79 +180,101 @@ function App() {
 
   return (
     <AuthProvider>
-      <Box h="100vh" w="100vw" position="relative">
-        <Box position="fixed" top={0} left={0} right={0} bottom={0} overflow="hidden" bg="gray.50">
-          <Box w="100%" h="100%" position="relative">
-            <Map 
-              userLocation={userLocation} 
-              playSpaces={playSpaces}
+      <Router>
+        <Box position="relative" width="100%" height="100vh">
+
+          <Routes>
+            <Route 
+              path="/" 
+              element={
+                <Box height="100%" width="100%">
+                  {isLoading ? (
+                    <Center height="100%">
+                      <Spinner size="xl" />
+                    </Center>
+                  ) : (
+                    <Box h="100vh" w="100vw" position="relative">
+                      <Box position="fixed" top={0} left={0} right={0} bottom={0} overflow="hidden" bg="gray.50">
+                        <Box w="100%" h="100%" position="relative">
+                          <Map 
+                            userLocation={userLocation} 
+                            playSpaces={playSpaces}
+                          />
+                          {isLoading && !userLocation && (
+                            <Center
+                              position="absolute"
+                              top="0"
+                              left="0"
+                              right="0"
+                              bottom="0"
+                              bg="rgba(0, 0, 0, 0.7)"
+                              zIndex="overlay"
+                            >
+                              <VStack spacing={4}>
+                                <Spinner
+                                  thickness="4px"
+                                  speed="0.65s"
+                                  emptyColor="gray.200"
+                                  color="blue.500"
+                                  size="xl"
+                                />
+                                <Text color="white" fontWeight="medium">
+                                  Getting your location...
+                                </Text>
+                              </VStack>
+                            </Center>
+                          )}
+                        </Box>
+
+                        <Box 
+                          position="fixed" 
+                          top="env(safe-area-inset-top, 16px)"
+                          left={4} 
+                          right={4} 
+                          p={2} 
+                          zIndex={1000}
+                          display="flex"
+                          alignItems="center"
+                          gap={3}
+                        >
+                          {/* Search Bar */}
+                          <Box 
+                            flex={1}
+                            bg="white" 
+                            borderRadius="full" 
+                            boxShadow="lg"
+                            display="flex"
+                            alignItems="center"
+                            px={4}
+                            py={2}
+                          >
+                            <Box as="span" mr={3} color="gray.500">
+                              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                              </svg>
+                            </Box>
+                            <Input
+                              variant="unstyled"
+                              placeholder="Search for sports venues..."
+                              _placeholder={{ color: 'gray.500' }}
+                              fontSize="sm"
+                            />
+                          </Box>
+
+                          {/* Profile Menu */}
+                          <ProfileMenu />
+                        </Box>
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+              } 
             />
-            {isLoading && !userLocation && (
-              <Center
-                position="absolute"
-                top="0"
-                left="0"
-                right="0"
-                bottom="0"
-                bg="rgba(0, 0, 0, 0.7)"
-                zIndex="overlay"
-              >
-                <VStack spacing={4}>
-                  <Spinner
-                    thickness="4px"
-                    speed="0.65s"
-                    emptyColor="gray.200"
-                    color="blue.500"
-                    size="xl"
-                  />
-                  <Text color="white" fontWeight="medium">
-                    Getting your location...
-                  </Text>
-                </VStack>
-              </Center>
-            )}
-          </Box>
-
-          <Box 
-            position="fixed" 
-            top="env(safe-area-inset-top, 16px)"
-            left={4} 
-            right={4} 
-            p={2} 
-            zIndex={1000}
-            display="flex"
-            alignItems="center"
-            gap={3}
-          >
-            {/* Search Bar */}
-            <Box 
-              flex={1}
-              bg="white" 
-              borderRadius="full" 
-              boxShadow="lg"
-              display="flex"
-              alignItems="center"
-              px={4}
-              py={2}
-            >
-              <Box as="span" mr={3} color="gray.500">
-                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-                </svg>
-              </Box>
-              <Input
-                variant="unstyled"
-                placeholder="Search for sports venues..."
-                _placeholder={{ color: 'gray.500' }}
-                fontSize="sm"
-              />
-            </Box>
-
-            {/* Profile Menu */}
-            <ProfileMenu />
-          </Box>
+            <Route path="/bookings" element={<BookingsPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </Box>
-      </Box>
+      </Router>
     </AuthProvider>
   );
 }

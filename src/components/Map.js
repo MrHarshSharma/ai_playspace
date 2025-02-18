@@ -5,7 +5,9 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import BookingModal from './BookingModal';
 import { useAuth } from '../contexts/AuthContext';
-import { auth } from '../firebase';
+import { supabase } from '../server/supabaseClient';
+import { saveBooking } from '../server/api';
+
 
 // Custom marker icons
 const userIcon = L.icon({
@@ -63,8 +65,10 @@ function MapUpdater({ userLocation }) {
 function Map({ userLocation, playSpaces }) {
     const [selectedSpace, setSelectedSpace] = useState(null);
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+    const [pendingSpaceId, setPendingSpaceId] = useState(null);
     const defaultPosition = useMemo(() => [28.6139, 77.2090], []); // Default to Delhi
     const { user, signInWithGoogle } = useAuth();
+    const isAuthenticated = !!user;
     const toast = useToast();
     
     // Initial map center
@@ -74,103 +78,30 @@ function Map({ userLocation, playSpaces }) {
 
     // Store markers in state
     const markers = useMemo(() => {
-        return playSpaces.map(space => (
-            <Marker key={space.id} position={[space.location.lat, space.location.lng]} icon={playSpaceIcon}>
-                <Popup>
-                    <div style={{ minWidth: '200px' }}>
-                        <h3 style={{ 
-                            fontSize: '16px', 
-                            fontWeight: 'bold',
-                            marginBottom: '8px',
-                            color: '#2D3748'
-                        }}>
-                            {space.name}
-                        </h3>
-                        <p style={{ 
-                            fontSize: '14px',
-                            color: '#4A5568',
-                            marginBottom: '4px'
-                        }}>
-                            <strong>Sport:</strong> {space.sport}
-                        </p>
-                        <p style={{ 
-                            fontSize: '14px',
-                            color: '#4A5568',
-                            marginBottom: '4px'
-                        }}>
-                            <strong>Address:</strong> {space.location.address}
-                        </p>
-                        <p style={{ 
-                            fontSize: '14px',
-                            color: '#4A5568',
-                            marginBottom: '4px'
-                        }}>
-                            <strong>Available:</strong> {space.availableTime}
-                        </p>
-                        <p style={{ 
-                            fontSize: '14px',
-                            color: '#4A5568',
-                            marginBottom: '4px'
-                        }}>
-                            <strong>Price:</strong> {space.price}
-                        </p>
-                        <p style={{ 
-                            fontSize: '14px',
-                            color: '#4A5568',
-                            marginBottom: '4px'
-                        }}>
-                            <strong>Distance:</strong> {space.distance.toFixed(1)}km
-                        </p>
-                        <div style={{ 
-                            marginTop: '8px',
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '4px'
-                        }}>
-                            {space.facilities.map((facility, index) => (
-                                <span key={index} style={{
-                                    backgroundColor: '#EDF2F7',
-                                    padding: '2px 8px',
-                                    borderRadius: '4px',
-                                    fontSize: '12px',
-                                    color: '#4A5568'
-                                }}>
-                                    {facility}
-                                </span>
-                            ))}
+        return playSpaces.map(space => {
+            console.log(`Rendering marker for ${space.name} at coordinates: ${space.location.lat}, ${space.location.lng}`);
+            return (
+                <Marker key={space.id} position={[space.location.lat, space.location.lng]} icon={playSpaceIcon}>
+                    <Popup>
+                        <div style={{ minWidth: '200px' }}>
+                            <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px', color: '#2D3748' }}>
+                                {space.name}
+                            </h3>
+                            <p style={{ fontSize: '14px', color: '#4A5568', marginBottom: '4px' }}>
+                                <strong>Sport:</strong> {space.sport}
+                            </p>
+                            <p style={{ fontSize: '14px', color: '#4A5568', marginBottom: '4px' }}>
+                                <strong>Address:</strong> {space.location.address}
+                            </p>
+                            <p style={{ fontSize: '14px', color: '#4A5568', marginBottom: '4px' }}>
+                                <strong>Available:</strong> {space.availableTime}
+                            </p>
+                            <Button colorScheme='teal' size='sm' onClick={() => handleBook(space.id)}>Book</Button>
                         </div>
-                        <Button
-                            onClick={async (e) => {
-                                e.stopPropagation();
-                                if (auth.currentUser) {
-                                    setSelectedSpace(space);
-                                    setIsBookingModalOpen(true);
-                                } else {
-                                    toast({
-                                        title: 'Authentication Required',
-                                        description: 'Please sign in to book a venue.',
-                                        status: 'warning',
-                                        duration: 3000,
-                                        isClosable: true,
-                                    });
-                                    try {
-                                        await signInWithGoogle();
-                                    } catch (error) {
-                                        console.error('Sign in error:', error);
-                                    }
-                                }
-                            }}
-                            colorScheme="blue"
-                            size="sm"
-                            mt={3}
-                            w="100%"
-                        >
-                            Book Now
-                        </Button>
-                    </div>
-                </Popup>
-            </Marker>
-        ));
+                    </Popup>
+                </Marker>
+            );
+        });
     }, [playSpaces]);
 
     // User location marker and circle
@@ -203,15 +134,71 @@ function Map({ userLocation, playSpaces }) {
         );
     }, [userLocation]);
 
+    const handleBook = (spaceId) => {
+        if (!isAuthenticated) {
+            setPendingSpaceId(spaceId); 
+            signInWithGoogle(); 
+        } else {
+            const space = playSpaces.find(space => space.id === spaceId);
+            setSelectedSpace(space);
+            setIsBookingModalOpen(true);
+        }
+    };
+
+    useEffect(() => {
+        if (isAuthenticated && pendingSpaceId) {
+            const space = playSpaces.find(space => space.id === pendingSpaceId);
+            setSelectedSpace(space);
+            setIsBookingModalOpen(true);
+            setPendingSpaceId(null); 
+        }
+    }, [isAuthenticated, pendingSpaceId, playSpaces]);
+
+   
+
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (formData, onClose) => {
+        setLoading(true); 
+        const userId = user.id ? user.id : user.uid; 
+        const playSpace = selectedSpace
+        const requirement = {...formData}
+        
+
+        try {
+            const result = await saveBooking(userId, playSpace, requirement);
+            console.log('Booking saved:', result);
+            toast({
+                title: 'Booking Successful!',
+                description: `You've booked ${playSpace.name} for ${formData.date} at ${formData.time}`,
+                status: 'success',
+                duration: 5000,
+                isClosable: true,
+              });
+        } catch (error) {
+            console.error('Error saving booking:', error);
+            toast({
+                title: 'Booking Failed!',
+                description: 'There was an error saving your booking. Please try again.',
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+              });
+        } finally {
+            setLoading(false); 
+            onClose(); 
+        }
+    };
+
     return (
         <>
         <MapContainer 
             center={center}
             zoom={15} 
             style={{ height: '100vh', width: '100vw' }}
-            zoomControl={false}
+            zoomControl={true}
             attributionControl={false}
-            scrollWheelZoom={false}
+            scrollWheelZoom={true}
         >
             <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -225,11 +212,10 @@ function Map({ userLocation, playSpaces }) {
         {/* Booking Modal */}
         <BookingModal
             isOpen={isBookingModalOpen}
-            onClose={() => {
-                setIsBookingModalOpen(false);
-                setSelectedSpace(null);
-            }}
+            onClose={() => setIsBookingModalOpen(false)}
             playSpace={selectedSpace}
+            handleSubmit={(formData) => handleSubmit(formData, () => setIsBookingModalOpen(false))}
+            loading={loading}
         />
         </>
     );

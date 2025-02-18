@@ -8,10 +8,16 @@ import {
   Box,
   Text,
 } from '@chakra-ui/react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 function ProfileMenu() {
   const { user, signInWithGoogle, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleBookingsClick = () => {
+    navigate('/bookings');
+  };
 
   console.log('User object:', user);
 
@@ -47,10 +53,17 @@ function ProfileMenu() {
             <MenuItem>
               <Text>{user.displayName}</Text>
             </MenuItem>
-            <MenuItem onClick={logout}>Sign Out</MenuItem>
+            <MenuItem onClick={handleBookingsClick}>
+              My Bookings
+            </MenuItem>
+            <MenuItem onClick={logout}>
+              Logout
+            </MenuItem>
           </>
         ) : (
-          <MenuItem onClick={signInWithGoogle}>Sign in with Google</MenuItem>
+          <MenuItem onClick={signInWithGoogle}>
+            Sign in with Google
+          </MenuItem>
         )}
       </MenuList>
     </Menu>
