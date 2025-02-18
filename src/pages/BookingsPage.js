@@ -28,8 +28,12 @@ function BookingsPage() {
     const getBookings = async () => {
       setIsLoading(true);
       try {
-        const data = await fetchBookings(user.uid);
-        setBookings(data);
+        if (user && user.uid) { 
+          const data = await fetchBookings(user.uid);
+          setBookings(data);
+        } else {
+          console.warn('User UID is undefined');
+        }
       } catch (error) {
         console.error('Error fetching bookings:', error);
       } finally {
@@ -37,9 +41,7 @@ function BookingsPage() {
       }
     };
 
-    if (user) {
-      getBookings();
-    }
+    getBookings(); 
   }, [user]);
 
   const handleSearch = (e) => {
@@ -130,7 +132,7 @@ function BookingsPage() {
         {filteredBookings.length === 0 ? (
           <Text>You have no bookings yet.</Text>
         ) : (
-          <Box>
+          <Box overflowY="auto" flex="1" height="calc(100vh - 200px)" maxHeight="90vh">
             {filteredBookings.map((booking) => (
               <BookingCard 
                 key={booking.id} 
