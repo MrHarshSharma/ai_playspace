@@ -232,6 +232,7 @@ function Map({ userLocation }) {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
             
+            
             {/* <MapUpdater userLocation={userLocation} /> */}
             <UserLocationMarker />
             {markers}
