@@ -7,8 +7,9 @@ import {
   Avatar,
   Box,
   Text,
+  Link,
 } from '@chakra-ui/react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 function ProfileMenu() {
@@ -56,6 +57,8 @@ function ProfileMenu() {
             <MenuItem onClick={handleBookingsClick}>
               My Bookings
             </MenuItem>
+            <MenuItem as={RouterLink} to="/add-play-space">Add Play Space</MenuItem>
+            <MenuItem as={RouterLink} to="/view-play-spaces">View Play Spaces</MenuItem>
             <MenuItem onClick={logout}>
               Logout
             </MenuItem>

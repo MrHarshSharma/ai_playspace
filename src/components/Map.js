@@ -1,13 +1,12 @@
 import React, { useEffect, useMemo, useCallback, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
-import { Button, useToast } from '@chakra-ui/react';
+import { Button, useToast, Spinner } from '@chakra-ui/react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import BookingModal from './BookingModal';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../server/supabaseClient';
-import { saveBooking } from '../server/api';
-
+import { saveBooking, fetchPlaySpaces } from '../server/api';
 
 // Custom marker icons
 const userIcon = L.icon({
@@ -57,12 +56,12 @@ function MapUpdater({ userLocation }) {
             updateMapView(position);
             isFirstUpdate.current = false;
         }
-    }, [userLocation, updateMapView]);
+    }, [userLocation]);
     
     return null;
 }
 
-function Map({ userLocation, playSpaces }) {
+function Map({ userLocation }) {
     const [selectedSpace, setSelectedSpace] = useState(null);
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
     const [pendingSpaceId, setPendingSpaceId] = useState(null);
@@ -70,7 +69,12 @@ function Map({ userLocation, playSpaces }) {
     const { user, signInWithGoogle } = useAuth();
     const isAuthenticated = !!user;
     const toast = useToast();
-    
+    const [playSpaces, setPlaySpaces] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+   
+
     // Initial map center
     const center = useMemo(() => {
         return userLocation ? [userLocation.lat, userLocation.lng] : defaultPosition;
@@ -81,14 +85,18 @@ function Map({ userLocation, playSpaces }) {
         return playSpaces.map(space => {
             console.log(`Rendering marker for ${space.name} at coordinates: ${space.location.lat}, ${space.location.lng}`);
             return (
-                <Marker key={space.id} position={[space.location.lat, space.location.lng]} icon={playSpaceIcon}>
+                <Marker 
+                    key={space.id} 
+                    position={{ lat: parseFloat(space.location.lat), lng: parseFloat(space.location.lng) }} 
+                    icon={playSpaceIcon}
+                >
                     <Popup>
                         <div style={{ minWidth: '200px' }}>
                             <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px', color: '#2D3748' }}>
                                 {space.name}
                             </h3>
                             <p style={{ fontSize: '14px', color: '#4A5568', marginBottom: '4px' }}>
-                                <strong>Sport:</strong> {space.sport}
+                                <strong>Sport:</strong> {space?.sports?.map((sport) => sport).join(', ')}
                             </p>
                             <p style={{ fontSize: '14px', color: '#4A5568', marginBottom: '4px' }}>
                                 <strong>Address:</strong> {space.location.address}
@@ -156,10 +164,10 @@ function Map({ userLocation, playSpaces }) {
 
    
 
-    const [loading, setLoading] = useState(false);
+    const [loadingBooking, setLoadingBooking] = useState(false);
 
     const handleSubmit = async (formData, onClose) => {
-        setLoading(true); 
+        setLoadingBooking(true); 
         const userId = user.id ? user.id : user.uid; 
         const playSpace = selectedSpace
         const requirement = {...formData}
@@ -185,26 +193,46 @@ function Map({ userLocation, playSpaces }) {
                 isClosable: true,
               });
         } finally {
-            setLoading(false); 
+            setLoadingBooking(false); 
             onClose(); 
         }
     };
+
+    useEffect(() => {
+        const fetchPlaySpacesData = async () => {
+            const { data, error } = await fetchPlaySpaces();
+            if (error) {
+                setError(error);
+            } else {
+                setPlaySpaces(data);
+            }
+            setLoading(false);
+        };
+
+        fetchPlaySpacesData();
+    }, []);
+
+    if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Spinner size="xl" thickness="2px" speed="0.65s" color="blue.500" />
+    </div>;
+    if (error) return <div>Error fetching play spaces: {error.message}</div>;
 
     return (
         <>
         <MapContainer 
             center={center}
-            zoom={15} 
-            style={{ height: '100vh', width: '100vw' }}
+            zoom={13} 
+            style={{ height: '100vh', width: '100%' }}
             zoomControl={true}
             attributionControl={false}
             scrollWheelZoom={true}
         >
             <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
             
-            <MapUpdater userLocation={userLocation} />
+            {/* <MapUpdater userLocation={userLocation} /> */}
             <UserLocationMarker />
             {markers}
         </MapContainer>
@@ -215,7 +243,7 @@ function Map({ userLocation, playSpaces }) {
             onClose={() => setIsBookingModalOpen(false)}
             playSpace={selectedSpace}
             handleSubmit={(formData) => handleSubmit(formData, () => setIsBookingModalOpen(false))}
-            loading={loading}
+            loading={loadingBooking}
         />
         </>
     );

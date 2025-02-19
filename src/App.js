@@ -19,7 +19,10 @@ import { AuthProvider } from './contexts/AuthContext';
 import ProfileMenu from './components/ProfileMenu';
 import Map from './components/Map';
 import BookingsPage from './pages/BookingsPage';
+import AddPlaySpace from './pages/AddPlaySpace';
+import EditPlaySpace from './pages/EditPlaySpace'; // Import EditPlaySpace component
 import { getNearbyPlaySpaces } from './services/playSpaceService';
+import ViewPlaySpaces from './pages/ViewPlaySpaces';
 
 function App() {
   // Handle mobile viewport height
@@ -261,7 +264,6 @@ function App() {
                             />
                           </Box>
 
-                          {/* Profile Menu */}
                           <ProfileMenu />
                         </Box>
                       </Box>
@@ -271,6 +273,9 @@ function App() {
               } 
             />
             <Route path="/bookings" element={<BookingsPage />} />
+            <Route path="/add-play-space" element={<AddPlaySpace />} />
+            <Route path="/edit-play-space/:id" element={<EditPlaySpace />} /> // Add route for editing play spaces
+            <Route path="/view-play-spaces" element={<ViewPlaySpaces />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Box>

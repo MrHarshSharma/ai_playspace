@@ -141,3 +141,54 @@ export const deleteBooking = async (bookingId) => {
         throw error;
     }
 };
+
+// Function to insert play space data
+export const insertPlaySpace = async (playSpaceData) => {
+    const { data, error } = await supabase
+        .from('playspaces')
+        .insert([playSpaceData]);
+    if (error) {
+        console.error('Error inserting data:', error);
+        return { error };
+    }
+    return { data };
+};
+
+// Function to get a play space by ID
+export const getPlaySpace = async (id) => {
+    const { data, error } = await supabase
+        .from('playspaces')
+        .select('*')
+        .eq('id', id)
+        .single(); // Fetch a single record
+    if (error) {
+        console.error('Error fetching play space:', error);
+        return { error };
+    }
+    return { data };
+};
+
+// Function to update a play space by ID
+export const updatePlaySpace = async (id, playSpaceData) => {
+    const { data, error } = await supabase
+        .from('playspaces')
+        .update(playSpaceData)
+        .eq('id', id);
+    if (error) {
+        console.error('Error updating play space:', error);
+        return { error };
+    }
+    return { data };
+};
+
+// Function to fetch all play spaces
+export const fetchPlaySpaces = async () => {
+    const { data, error } = await supabase
+        .from('playspaces')
+        .select('*');
+    if (error) {
+        console.error('Error fetching play spaces:', error);
+        return { error };
+    }
+    return { data };
+};
